@@ -15,6 +15,9 @@ import os
 #import pkg_resources
 #print("mxnet version:", pkg_resources.get_distribution("mxnet").version)
 
+base_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+
+
 def create_dir(dir):
     if not os.path.isdir(dir):
         os.mkdir(dir)
@@ -29,7 +32,8 @@ def get_array(face_chip):
     return array
 
 # load mxnet weight
-prefix = "./models/Resnet100/model"
+# prefix = base_path + "/models/recognition/Resnet100/model"
+prefix = base_path + "/models/recognition/MFaceNet/model"
 sym, arg, aux = mx.model.load_checkpoint(prefix, 0)
 
 # define mxnet
@@ -39,9 +43,9 @@ mod.bind(for_training=False, data_shapes=[('data', (1,3,112,112))])
 mod.set_params(arg, aux)
 Batch = namedtuple('Batch', ['data'])
 
-output_path = "/home/louis/Desktop/output_embededs/"
+output_path = base_path + "/dataset/embededs_facenet/"
 create_dir(output_path)
-folder_path = "/home/louis/Desktop/align_images/"
+folder_path = base_path + "/dataset/label/"
 list_id = os.listdir(folder_path)
 
 

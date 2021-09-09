@@ -6,18 +6,19 @@ import mxnet as mx
 from collections import namedtuple
 
 from src.FaceDetection import face_inference, retinaface
-from src.FaceRecognition import inference_arcface, inference_SVM
+from src.FaceRecognition import inference_arcface, inference_SVM, compare_similarity
+from get_embedding_db import get_embedding_db
 
 
-detection_threshold = 0.9
-classification_threshold = -0.55
+detection_threshold = 0.8
+classification_threshold = 0 #-0.55
 
 gpuid = 0
 detector = retinaface.RetinaFace('./models/detection/Mobilenet/mnet.25', 0, gpuid, 'net3')
-# detector = RetinaFace('./models/detection/Resnet50/R50', 0, gpuid, 'net3')
+# detector = retinaface.RetinaFace('./models/detection/Resnet50/R50', 0, gpuid, 'net3')
 
 # load mxnet weight
-prefix = "./models/recognition/Resnet100/model"
+prefix = "./models/recognition/MFaceNet/model"
 sym, arg, aux = mx.model.load_checkpoint(prefix, 0)
 
 # define mxnet
@@ -28,17 +29,21 @@ mod.set_params(arg, aux)
 batch = namedtuple('Batch', ['data'])
 
 # Load SVM model
-with open("./models/SVM/model.pkl", "rb") as f:
+with open("./models/SVM/model_facenet.pkl", "rb") as f:
     SVM_model = pickle.load(f)
 
+
+list_label, list_embeddings = get_embedding_db("./dataset/embeddings_facenet")
+
 cap = cv2.VideoCapture('./dataset/Security_Camera.mp4')
-scales = [480, 900]
+scales = [720, 1280]
+font = cv2.FONT_HERSHEY_SIMPLEX
     
 prev_frame_time = 0
 new_frame_time = 0
 
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
-output_video = cv2.VideoWriter('./output/result.avi', fourcc, 20.0, (900,480))
+output_video = cv2.VideoWriter('./output/result_Facenet_cosine_sim.avi', fourcc, 20.0, (640,360))
 
 while(cap.isOpened()):
 
@@ -56,12 +61,12 @@ while(cap.isOpened()):
             face_embeded = inference_arcface.get_face_embeded(face, mod, batch)
             list_embeddeds.append(face_embeded)
 
-        for embeded_face in list_embeddeds:
-            identity = inference_SVM.inference_identity(embeded_face, SVM_model, classification_threshold)
+        for embedding_face in list_embeddeds:
+            cosine_similarity = compare_similarity.get_cosine_similarity(embedding_face, list_embeddings, list_label)
+            identity = compare_similarity.get_target_id(cosine_similarity)
+            # identity = inference_SVM.inference_identity(embedding_face, SVM_model, classification_threshold)
             list_identities.append(identity)
 
-
-    if faces is not None:
         for i in range(faces.shape[0]):
             box = faces[i].astype(np.int32)
             identity = list_identities[i]
@@ -71,7 +76,6 @@ while(cap.isOpened()):
 
     
     # font which we will be using to display FPS
-    font = cv2.FONT_HERSHEY_SIMPLEX
     # time when we finish processing for this frame
     new_frame_time = time.time()
 
@@ -82,7 +86,7 @@ while(cap.isOpened()):
     fps = int(fps)
     fps = "FPS: " + str(fps)
 
-    frame = cv2.resize(frame, (900, 480))
+    frame = cv2.resize(frame, (640, 360))
 
     # putting the FPS count on the frame
     cv2.putText(frame, fps, (7, 40), font, 1, (100, 255, 0), 2, cv2.LINE_AA)

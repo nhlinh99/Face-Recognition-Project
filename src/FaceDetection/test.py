@@ -2,11 +2,12 @@ import cv2
 import numpy as np
 import time
 import os
-import sys
 
 from retinaface import RetinaFace
 from utils.alignment import get_reference_facial_points, warp_and_crop_face
 
+
+base_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 def create_dir(dir):
     if not os.path.isdir(dir):
@@ -29,17 +30,16 @@ def process(img, facial_5_points, output_size):
     return dst_img
 
 
-thresh = 0.9
+thresh = 0.8
 
 gpuid = 0
-detector = RetinaFace('./model/Mobilenet/mnet.25', 0, gpuid, 'net3')
-# detector = RetinaFace('./model/Resnet50/R50', 0, gpuid, 'net3')
-
-dirname = "./align_images"
+# detector = RetinaFace('./models/detection/Mobilenet/mnet.25', 0, gpuid, 'net3')
+detector = RetinaFace(base_path + '/models/detection/Resnet50/R50', 0, gpuid, 'net3')
+dirname = base_path + "/dataset/label"
 create_dir(dirname)
 
-cap = cv2.VideoCapture('/home/louis/Desktop/Security_Camera.mp4')
-    
+cap = cv2.VideoCapture(base_path + '/dataset/Security_Camera.mp4')
+
 # used to record the time when we processed last frame
 prev_frame_time = 0
 # used to record the time at which we processed current frame
@@ -57,7 +57,7 @@ while(cap.isOpened()):
         break
 
 
-    scales = [640, 1200]
+    scales = [405, 720]
     im_shape = frame.shape
     target_size = scales[0]
     max_size = scales[1]
@@ -127,6 +127,7 @@ while(cap.isOpened()):
     # putting the FPS count on the frame
     cv2.putText(frame, fps, (7, 40), font, 1, (100, 255, 0), 2, cv2.LINE_AA)
 
+    frame = cv2.resize(frame, (720, 405))
     # displaying the frame with fps
     cv2.imshow('frame', frame)
 
