@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import time
+from sklearn.metrics.pairwise import cosine_similarity
 
 
 upper_threshold = 0.8
@@ -42,7 +43,8 @@ def normalize_matrix(m):
 def get_cosine_similarity(compared_embedding, list_embeddings, list_label):
 
     # list_similarity = normalize_matrix(list_embeddings) @ normalize_vector(compared_embedding)
-    list_similarity = normalize_matrix(list_embeddings).dot(normalize_vector(compared_embedding))
+    # list_similarity = normalize_matrix(list_embeddings).dot(normalize_vector(compared_embedding))
+    list_similarity = list_embeddings.dot(compared_embedding)
     list_label_similarity = np.column_stack((list_label, list_similarity.astype(np.object)))
     list_label_similarity = list_label_similarity[np.lexsort((list_label_similarity[:,0],list_label_similarity[:,1]))][::-1]
     return list_label_similarity
@@ -77,7 +79,7 @@ if __name__=="__main__":
 
     compared_embedding = np.load("/home/louis/Desktop/Face Recognition Project/dataset/embeddings_facenet/2/730_2.npy").tolist()
     start = time.time()
-    list_similarity = get_cosine_similarity(compared_embedding, list_embeddings, list_label)
+    list_similarity = get_cosine_similarity_2(compared_embedding, list_embeddings, list_label)
     print("Inference time:", time.time() - start)
     start = time.time()
     target_id = get_target_id(list_similarity)

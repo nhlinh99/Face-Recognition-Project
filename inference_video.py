@@ -10,7 +10,7 @@ from src.FaceRecognition import inference_arcface, inference_SVM, compare_simila
 from get_embedding_db import get_embedding_db
 
 
-detection_threshold = 0.8
+detection_threshold = 0.85
 classification_threshold = 0 #-0.55
 
 gpuid = 0
@@ -42,8 +42,8 @@ font = cv2.FONT_HERSHEY_SIMPLEX
 prev_frame_time = 0
 new_frame_time = 0
 
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-output_video = cv2.VideoWriter('./output/result_Facenet_cosine_sim.avi', fourcc, 20.0, (640,360))
+# fourcc = cv2.VideoWriter_fourcc(*'XVID')
+# output_video = cv2.VideoWriter('./output/result_Facenet_cosine_sim.avi', fourcc, 20.0, (640,360))
 
 while(cap.isOpened()):
 
@@ -62,15 +62,16 @@ while(cap.isOpened()):
             list_embeddeds.append(face_embeded)
 
         for embedding_face in list_embeddeds:
-            cosine_similarity = compare_similarity.get_cosine_similarity(embedding_face, list_embeddings, list_label)
-            identity = compare_similarity.get_target_id(cosine_similarity)
-            # identity = inference_SVM.inference_identity(embedding_face, SVM_model, classification_threshold)
+            # cosine_similarity = compare_similarity.get_cosine_similarity(embedding_face, list_embeddings, list_label)
+            # identity = compare_similarity.get_target_id(cosine_similarity)
+            identity = inference_SVM.inference_identity(embedding_face, SVM_model, classification_threshold)
             list_identities.append(identity)
 
         for i in range(faces.shape[0]):
             box = faces[i].astype(np.int32)
             identity = list_identities[i]
             color = (0, 0, 255)
+            print(box)
             cv2.rectangle(frame, (box[0], box[1]), (box[2], box[3]), color, 2)
             cv2.putText(frame, str(identity), (box[0], box[1] - 7), font, 1, (100, 255, 0), 2, cv2.LINE_AA)
 
@@ -91,7 +92,7 @@ while(cap.isOpened()):
     # putting the FPS count on the frame
     cv2.putText(frame, fps, (7, 40), font, 1, (100, 255, 0), 2, cv2.LINE_AA)
 
-    output_video.write(frame)
+    # output_video.write(frame)
     # displaying the frame with fps
     cv2.imshow('frame', frame)
 
@@ -101,6 +102,6 @@ while(cap.isOpened()):
 
 # When everything done, release the capture
 cap.release()
-output_video.release()
+# output_video.release()
 # Destroy the all windows now
 cv2.destroyAllWindows()
