@@ -6,7 +6,7 @@ import mxnet as mx
 from collections import namedtuple
 
 from src.FaceDetection import face_inference, retinaface
-from src.FaceRecognition import inference_arcface, inference_SVM, compare_similarity
+from src.FaceRecognition import inference_face_embedding, inference_SVM, compare_similarity
 from get_embedding_db import get_embedding_db
 
 
@@ -58,7 +58,7 @@ while(cap.isOpened()):
     list_identities = []
     if (len(crop_faces) > 0):
         for face in crop_faces:
-            face_embeded = inference_arcface.get_face_embeded(face, mod, batch)
+            face_embeded = inference_face_embedding.get_face_embeded(face, mod, batch)
             list_embeddeds.append(face_embeded)
 
         for embedding_face in list_embeddeds:
